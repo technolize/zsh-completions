@@ -2,8 +2,8 @@
 
 typeset -ga nul_args
 nul_args=(
-  '--settings=-[The Python path to a settings module.]:file:_files'
-  '--pythonpath=-[A directory to add to the Python path.]::directory:_directories'
+  '--settings=-[the Python path to a settings module.]:file:_files'
+  '--pythonpath=-[a directory to add to the Python path.]::directory:_directories'
   '--traceback[print traceback on exception.]'
   "--version[show program's version number and exit.]"
   {-h,--help}'[show this help message and exit.]'
@@ -39,15 +39,27 @@ _managepy-dumpdata(){
 }
 
 _managepy-flush(){
-_arguments -s : \
-  '--verbosity=-[verbosity level; 0=minimal output, 1=normal output, 2=all output.]:Verbosity:((0\:minimal 1\:normal 2\:all))' \
-  '--noinput[tells Django to NOT prompt the user for input of any kind.]' \
-  $nul_args && ret=0
+  _arguments -s : \
+    '--verbosity=-[verbosity level; 0=minimal output, 1=normal output, 2=all output.]:Verbosity:((0\:minimal 1\:normal 2\:all))' \
+    '--noinput[tells Django to NOT prompt the user for input of any kind.]' \
+    $nul_args && ret=0
 }
 
 _managepy-help(){
   _arguments -s : \
+    '*:command:_managepy_cmds' \
     $nul_args && ret=0
+}
+
+_managepy_cmds(){
+    local line
+    local -a cmd
+    _call_program help-command ./manage.py help \
+    |& sed -n '/^ /s/[(), ]/ /gp' \
+    | while read -A line; do
+	    cmd=($line $cmd)
+          done
+    _describe -t svn-command 'manage.py command' cmd
 }
 
 _managepy-inspectdb(){
@@ -57,11 +69,15 @@ _managepy-inspectdb(){
 
 _managepy-loaddata(){
   _arguments -s : \
+    '--verbosity=-[verbosity level; 0=minimal output, 1=normal output, 2=all output.]:Verbosity:((0\:minimal 1\:normal 2\:all))' \
+    '*::file:_files' \
     $nul_args && ret=0
 }
 
 _managepy-reset(){
   _arguments -s : \
+    '--noinput[tells Django to NOT prompt the user for input of any kind.]' \
+    '*::directory:_directories' \
     $nul_args && ret=0
 }
 
@@ -114,10 +130,34 @@ _managepy-sqlinitialdata(){}
 _managepy-sqlreset(){}
 _managepy-sqlsequencereset(){}
 _managepy-startapp(){}
-_managepy-syncdb(){}
-_managepy-test(){}
-_managepy-testserver(){}
-_managepy-validate(){}
+
+_managepy-syncdb() {
+  _arguments -s : \
+    '--verbosity=-[verbosity level; 0=minimal output, 1=normal output, 2=all output.]:Verbosity:((0\:minimal 1\:normal 2\:all))' \
+    '--noinput[tells Django to NOT prompt the user for input of any kind.]' \
+    $nul_args && ret=0
+}
+
+_managepy-test() {
+  _arguments -s : \
+    '--verbosity=-[verbosity level; 0=minimal output, 1=normal output, 2=all output.]:Verbosity:((0\:minimal 1\:normal 2\:all))' \
+    '--noinput[tells Django to NOT prompt the user for input of any kind.]' \
+    '*::appname:' \
+    $nul_args && ret=0
+}
+
+_managepy-testserver() {
+  _arguments -s : \
+    '--verbosity=-[verbosity level; 0=minimal output, 1=normal output, 2=all output.]:Verbosity:((0\:minimal 1\:normal 2\:all))' \
+    '--addrport=-[port number or ipaddr:port to run the server on.]' \
+    '*::fixture:_files' \
+    $nul_args && ret=0
+}
+
+_managepy-validate() {
+  _arguments -s : \
+    $nul_args && ret=0
+}
 
 _managepy-commands() {
   local -a commands
@@ -129,6 +169,7 @@ _managepy-commands() {
     "diffsettings:displays differences between the current settings.py and Django's default settings."
     'dumpdata:Output the contents of the database as a fixture of the given format.'
     'flush:Executes ``sqlflush`` on the current database.'
+    'help:manage.py help.'
     'inspectdb:Introspects the database tables in the given database and outputs a Django model module.'
     'loaddata:Installs the named fixture(s) in the database.'
     'reset:Executes ``sqlreset`` for the given app(s) in the current database.'
