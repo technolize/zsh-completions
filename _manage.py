@@ -35,7 +35,7 @@ _managepy-dumpdata(){
     '--format=-[specifies the output serialization format for fixtures.]:format:(json yaml xml)' \
     '--indent=-[specifies the indent level to use when pretty-printing output.]:' \
     $nul_args \
-    '*::directory:_directories' && ret=0
+    '*::appname:_applist' && ret=0
 }
 
 _managepy-flush(){
@@ -55,11 +55,9 @@ _managepy_cmds(){
     local line
     local -a cmd
     _call_program help-command ./manage.py help \
-    |& sed -n '/^ /s/[(), ]/ /gp' \
-    | while read -A line; do
-	    cmd=($line $cmd)
-          done
-    _describe -t svn-command 'manage.py command' cmd
+      |& sed -n '/^ /s/[(), ]/ /gp' \
+      | while read -A line; do cmd=($line $cmd) done
+    _describe -t managepy-command 'manage.py command' cmd
 }
 
 _managepy-inspectdb(){
@@ -77,7 +75,7 @@ _managepy-loaddata(){
 _managepy-reset(){
   _arguments -s : \
     '--noinput[tells Django to NOT prompt the user for input of any kind.]' \
-    '*::directory:_directories' \
+    '*::appname:_applist' \
     $nul_args && ret=0
 }
 
@@ -142,7 +140,7 @@ _managepy-test() {
   _arguments -s : \
     '--verbosity=-[verbosity level; 0=minimal output, 1=normal output, 2=all output.]:Verbosity:((0\:minimal 1\:normal 2\:all))' \
     '--noinput[tells Django to NOT prompt the user for input of any kind.]' \
-    '*::appname:' \
+    '*::appname:_applist' \
     $nul_args && ret=0
 }
 
@@ -193,6 +191,18 @@ _managepy-commands() {
   )
   
   _describe -t commands 'manage.py command' commands && ret=0
+}
+
+_applist() {
+  local line
+  local -a apps
+  _call_program help-command "python -c \"import os.path as op, re, settings, sys;\\
+                                          bn=op.basename(op.abspath(op.curdir));[sys\\
+                                          .stdout.write(str(re.sub(r'^%s\.(.*?)$' %
+                                          bn, r'\1', i)) + '\n') for i in settings.\\
+                                          INSTALLED_APPS if re.match(r'^%s' % bn, i)]\"" \
+                             | while read -A line; do apps=($line $apps) done
+  _values 'Application' $apps && ret=0
 }
 
 _managepy() {
