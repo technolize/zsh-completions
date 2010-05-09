@@ -7,6 +7,7 @@ common_ops=(
   "--version[display version number]"
   {-h,--help}"[show help]"
   {-E,--environment=}"[virtualenv environment to run pip]:environment:_directories"
+  {-s,--enable-site-packages}"[include site-packages in virtualenv]"
   {-v,--verbose}"[give more output]"
   {-q,--quiet}"[give less output]"
   "--log=[log file where a complete record will be kept]"
@@ -31,6 +32,8 @@ case $state in
       "freeze:put all currently installed packages"
       "help:show available commands"
       "install:install packages"
+      "search:search pypi"
+      "usinstall:uninstall packages"
       "unzip:unzip undividual packages"
       "zip:zip dividual packages"
     )
@@ -60,7 +63,7 @@ case $state in
           {-e,--editable=}"[install a package directly from a checkout]:VCS+REPOS_URL[@REV]#egg=PACKAGE"
           $requirement
           $findlink
-          {-i,--index-url=}"[base URL of Python Package Index]:URL"
+          {-i,--index-url=,--pypi-url=}"[base URL of Python Package Index]:URL"
           "--extra-index-url=[extra URLs of package indexes to use]:URL"
           {-b,--build=,--build-dir=}"[unpack packages into DIR]:directory:_directories"
           {--src=,--source=}"[check out --editable packages into DIR]:directory:_directories"
